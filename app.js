@@ -9,17 +9,17 @@ app.use(bodyParser.urlencoded({
   extended: true
 }));
 
-var items = ["Buy Food", "Cook Food", "Eat Food"];
+let items = ["Buy Food", "Cook Food", "Eat Food"];
 
 app.get("/", function(req, res) {
 
-  var today = new Date();
-  var options = {
+  let today = new Date();
+  let options = {
     weekday: "long",
     month: "long",
     day: "numeric"
   };
-  var day = today.toLocaleDateString("en-US", options);
+  let day = today.toLocaleDateString("en-US", options);
 
   res.render("list", {
     kindOfDay: day,
