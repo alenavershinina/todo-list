@@ -4,21 +4,31 @@
 <head>
   <meta charset="utf-8">
   <title>To Do list</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@200;400&display=swap" rel="stylesheet">
 </head>
 
 <body>
-  <h1><%= kindOfDay %></h1>
-  <ul>
+  <div class="box" id="heading">
+    <h1><%= kindOfDay %></h1>
+  </div>
+
+  <div class="box">
     <% for (let i = 0; i < newListItems.length; i++) { %>
-    <li><%= newListItems[i] %></li>
+    <div class="item">
+      <input type="checkbox">
+      <p><%= newListItems[i] %></p>
+    </div>
     <% } %>
-    <li>
+    <div class="item">
       <form action="/" method="post">
-        <input type="text" name="newItem" placeholder="Add new task">
-        <button type="submit" name="button">Add</button>
+        <input type="text" name="newItem" placeholder="New task" autocomplete="off">
+        <button type="submit" name="button">+</button>
       </form>
-    </li>
-  </ul>
+    </div>
+  </div>
+
 
 </body>
 
