@@ -1,6 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
+const _ = require("lodash");
 const date = require(__dirname + "/date.js");
 
 const app = express();
@@ -36,8 +37,14 @@ const item3 = new Item({
 
 const defaultItems = [item1, item2, item3];
 
+const listSchema = new mongoose.Schema({
+  name: String,
+  items: [itemsSchema]
+});
+
+const List = mongoose.model("List", listSchema);
+
 app.get("/", function(req, res) {
-  let day = date();
   Item.find({}, function(err, items) {
     if (items.length === 0) {
       Item.insertMany(defaultItems, function(err) {
@@ -50,17 +57,35 @@ app.get("/", function(req, res) {
       res.redirect("/");
     } else {
       res.render("list", {
-        listName: day,
-        newListItems: items
+        listName: date(),
+        listItems: items
       });
     }
   });
 });
 
-app.get("/work", function(req, res) {
-  res.render("list", {
-    listName: "Work list",
-    newListItems: workItems
+app.get("/:listName", function(req, res) {
+  const listName = _.capitalize(req.params.listName);
+  List.findOne({
+    name: listName
+  }, function(err, foundList) {
+    if (err) {
+      console.log(err);
+    } else {
+      if (!foundList) {
+        const newList = new List({
+          name: listName,
+          items: defaultItems
+        });
+        newList.save();
+        res.redirect("/" + listName)
+      } else {
+        res.render("list", {
+          listName: foundList.name,
+          listItems: foundList.items
+        });
+      }
+    }
   });
 });
 
@@ -69,27 +94,57 @@ app.get("/about", function(req, res) {
 });
 
 app.post("/", function(req, res) {
-  let item = req.body.newItem;
-  if (req.body.list === "Work") {
-    workItems.push(item);
-    res.redirect("/work");
-  } else {
-    Item({
-      name: item
-    }).save();
+  const item = new Item({
+    name: req.body.newItem
+  });
+  const listName = req.body.list;
+  if (listName === date()) {
+    item.save();
     res.redirect("/");
+  } else {
+    List.findOne({
+      name: listName
+    }, function(err, foundList) {
+      if (err) {
+        console.log(err);
+      } else {
+        foundList.items.push(item);
+        foundList.save();
+        res.redirect("/" + listName);
+      }
+    });
   }
 });
 
 app.post("/delete", function(req, res) {
-  Item.findByIdAndRemove(req.body.checkbox, function(err) {
-    if (err) {
-      console.log(err);
-    } else {
-      console.log("Successfully removed item from database");
-      res.redirect("/");
-    }
-  });
+  const checkedItemId = req.body.checkbox;
+  const listName = req.body.list;
+  if (listName === date()) {
+    Item.findByIdAndRemove(checkedItemId, function(err) {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log("Successfully removed item from database");
+        res.redirect("/");
+      }
+    });
+  } else {
+    List.findOneAndUpdate({
+      name: listName
+    }, {
+      $pull: {
+        items: {
+          _id: checkedItemId
+        }
+      }
+    }, function(err, foundList) {
+      if (err) {
+        console.log(err);
+      } else {
+        res.redirect("/" + listName);
+      }
+    });
+  }
 });
 
 app.listen(3000, function() {
